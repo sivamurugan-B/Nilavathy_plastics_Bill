@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>All Invoices – Nilaavathy Plastics</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+  .search-bar {
+    max-width: 900px;
+    margin: 14px auto 0;
+    padding: 0 4px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .search-bar input {
+    flex: 1;
+    padding: 7px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 13px;
+    outline: none;
+  }
+  .search-bar input:focus { border-color: #1a237e; }
+  .badge {
+    display: inline-block;
+    background: #e8eaf6;
+    color: #1a237e;
+    border-radius: 12px;
+    padding: 2px 10px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .del-btn {
+    background: none;
+    border: 1px solid #e53935;
+    color: #e53935;
+    border-radius: 3px;
+    padding: 3px 10px;
+    font-size: 11px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .del-btn:hover { background: #ffebee; }
+</style>
+</head>
+<body>
+
+<nav class="app-nav">
+  <h1>Nilaavathy Plastics – GST Billing</h1>
+  <div class="nav-links">
+    <a href="/">+ New Invoice</a>
+    <a href="/invoices">All Invoices</a>
+  </div>
+</nav>
+
+<div class="search-bar">
+  <input type="text" id="searchBox" placeholder="Search by buyer name, invoice number…" oninput="filterTable()">
+  <span class="badge" id="countBadge">0 invoices</span>
+</div>
+
+<div class="list-container" style="margin-top:10px">
+  <h2>All Saved Invoices</h2>
+  <table class="list-table" id="invoiceTable">
+    <thead>
+      <tr>
+        <th>Invoice No</th>
+        <th>Date</th>
+        <th>Buyer Name</th>
+        <th>Buyer GSTIN</th>
+        <th class="amount-col">Grand Total (₹)</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="invoiceList">
+      <tr><td colspan="6" class="empty-msg">Loading…</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+const API = 'http://localhost:8000';
+let allInvoices = [];
+
+async function loadInvoices() {
+  try {
+    const res = await fetch(`${API}/api/invoices`);
+    allInvoices = await res.json();
+    renderTable(allInvoices);
+  } catch(e) {
+    document.getElementById('invoiceList').innerHTML =
+      '<tr><td colspan="6" class="empty-msg">Could not connect to server. Is the backend running?</td></tr>';
+  }
+}
+
+function renderTable(data) {
+  const tbody = document.getElementById('invoiceList');
+  document.getElementById('countBadge').textContent = data.length + ' invoice' + (data.length !== 1 ? 's' : '');
+  if (data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-msg">No invoices saved yet. <a href="/">Create your first invoice →</a></td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(inv => `
+    <tr>
+      <td><strong>#${inv.invoice_number}</strong></td>
+      <td>${formatDate(inv.invoice_date)}</td>
+      <td>${esc(inv.buyer_name)}</td>
+      <td>${esc(inv.buyer_gstin || '–')}</td>
+      <td class="amount-col">₹${fmtAmt(inv.grand_total)}</td>
+      <td style="display:flex;gap:6px;align-items:center">
+        <a href="/view?id=${inv.id}">View / Print</a>
+        <button class="del-btn" onclick="deleteInvoice(${inv.id}, '${inv.invoice_number}')">Delete</button>
+      </td>
+    </tr>`).join('');
+}
+
+function filterTable() {
+  const q = document.getElementById('searchBox').value.toLowerCase();
+  const filtered = allInvoices.filter(inv =>
+    inv.buyer_name.toLowerCase().includes(q) ||
+    inv.invoice_number.toLowerCase().includes(q) ||
+    (inv.buyer_gstin || '').toLowerCase().includes(q)
+  );
+  renderTable(filtered);
+}
+
+async function deleteInvoice(id, num) {
+  if (!confirm(`Delete Invoice #${num}? This cannot be undone.`)) return;
+  await fetch(`${API}/api/invoices/${id}`, { method: 'DELETE' });
+  allInvoices = allInvoices.filter(i => i.id !== id);
+  renderTable(allInvoices);
+}
+
+function formatDate(d) {
+  if (!d) return '';
+  const [y, m, day] = d.split('-');
+  return `${day}-${m}-${y}`;
+}
+function fmtAmt(n) {
+  return Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+}
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+loadInvoices();
+</script>
+</body>
+</html>

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New Invoice – Nilaavathy Plastics</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<!-- NAV (hidden on print) -->
+<nav class="app-nav no-print">
+  <h1>Nilaavathy Plastics – GST Billing</h1>
+  <div class="nav-links">
+    <a href="/">+ New Invoice</a>
+    <a href="/invoices">All Invoices</a>
+  </div>
+</nav>
+
+<!-- ACTION BUTTONS -->
+<div class="action-bar no-print">
+  <button class="btn btn-success" onclick="saveInvoice()">&#128190; Save Invoice</button>
+  <button class="btn btn-primary" onclick="window.print()">&#128438; Print Invoice</button>
+  <button class="btn btn-secondary" onclick="resetForm()">&#8635; Reset</button>
+</div>
+
+<!-- ===================== INVOICE PAPER ===================== -->
+<div class="invoice-wrapper" id="invoiceDoc">
+
+  <!-- HEADER -->
+  <div class="inv-header">
+    <div class="inv-logo"><img src="/static/logo.png" alt="NP" style="width:60px;height:60px;border-radius:50%;object-fit:cover;"></div>
+    <div class="inv-title-block">
+      <div class="inv-title">TAX INVOICE</div>
+      <div class="inv-business-name">NILAAVATHY PLASTICS</div>
+      <div class="inv-address">
+        220, Manimedu Salai, Thandalam Village, Kundrathur Taluk, Kundrathur, Chennai, Kancheepuram, Tamil Nadu – 600069<br>
+        Mobile: (+91) 9710245590 &nbsp;|&nbsp; (+91) 9080803850
+      </div>
+      <div class="inv-gstin">GSTIN : 33AMXPB8692C1ZR</div>
+    </div>
+    <div class="inv-original">ORIGINAL</div>
+  </div>
+
+  <!-- BUYER + INVOICE META -->
+  <div class="inv-meta">
+    <div class="inv-buyer">
+      <div style="margin-bottom:4px"><strong>TO</strong></div>
+      <label>Buyer / Party Name</label>
+      <input class="inv-input large bold" id="buyerName" placeholder="Buyer Name" autocomplete="off">
+      <div style="margin-top:6px">
+        <label>Address</label>
+        <textarea class="inv-input" id="buyerAddress" rows="2"
+          style="resize:none;border:1px dashed #aaa;padding:2px 4px;width:100%;font-size:12px;"
+          placeholder="Street, City, PIN"></textarea>
+      </div>
+    </div>
+    <div class="inv-info">
+      <div class="inv-info-row">
+        <span class="info-label">INVOICE NO :</span>
+        <input class="inv-input bold" id="invoiceNumber" style="width:90px" placeholder="001">
+      </div>
+      <div class="inv-info-row">
+        <span class="info-label">DATE :</span>
+        <input class="inv-input" id="invoiceDate" type="date" style="width:140px">
+      </div>
+      <div class="inv-info-row" style="margin-top:8px">
+        <span class="info-label">VEHICLE NO :</span>
+        <input class="inv-input" id="vehicleNumber" placeholder="TN 00 XX 0000" style="width:140px;text-transform:uppercase">
+      </div>
+    </div>
+  </div>
+
+  <!-- BUYER GSTIN ROW -->
+  <div class="inv-gstin-row" style="padding:6px 0 8px;">
+    <label><strong>Buyer's GSTIN / UAN :</strong></label>
+    <input class="inv-input" id="buyerGstin" placeholder="Enter Buyer GSTIN"
+      style="width:220px;margin-left:8px;text-transform:uppercase">
+  </div>
+
+  <!-- PRODUCT TABLE -->
+  <table class="inv-table" id="productTable">
+    <thead>
+      <tr>
+        <th style="width:40px">S.No</th>
+        <th>Description</th>
+        <th style="width:70px">HSN</th>
+        <th style="width:80px">Quantity</th>
+        <th style="width:80px">Rate (₹)</th>
+        <th style="width:90px">Amount (₹)</th>
+        <th class="no-print" style="width:32px"></th>
+      </tr>
+    </thead>
+    <tbody id="itemsBody">
+      <!-- rows added dynamically -->
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="4" rowspan="5" style="vertical-align:top;padding:6px 4px;border-right:none;">
+          <div class="inv-words" id="amountWords"><em>Total Amount (INR – In Words):</em> <strong>–</strong></div>
+        </td>
+        <td class="total-label">TOTAL AMOUNT</td>
+        <td class="total-value" id="subtotalCell">0.00</td>
+        <td class="no-print" style="border:none;background:#fff"></td>
+      </tr>
+      <tr>
+        <td class="total-label">SGST @ 9%</td>
+        <td class="total-value" id="sgstCell">0.00</td>
+        <td class="no-print" style="border:none;background:#fff"></td>
+      </tr>
+      <tr>
+        <td class="total-label">CGST @ 9%</td>
+        <td class="total-value" id="cgstCell">0.00</td>
+        <td class="no-print" style="border:none;background:#fff"></td>
+      </tr>
+      <tr class="grand-row">
+        <td class="total-label" style="font-style:italic">GRAND TOTAL</td>
+        <td class="total-value" style="font-style:italic" id="grandTotalCell">0.00</td>
+        <td class="no-print" style="border:none;background:#fff"></td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <!-- ADD ROW BUTTON -->
+  <div class="no-print">
+    <button class="add-row-btn" onclick="addRow()">+ Add Item Row</button>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="inv-footer">
+    <div class="inv-bank">
+      <h4>Our Bank Details :</h4>
+      <p>
+        <strong>Bank :</strong> Tamilnad Mercantile Bank Ltd<br>
+        <strong>Branch :</strong> Porur, Chennai – 116<br>
+        <strong>A/c No :</strong> 229700050900062<br>
+        <strong>IFSC Code :</strong> TMBL0000229
+      </p>
+    </div>
+    <div class="inv-sign">
+      <div class="for-company">For NILAAVATHY PLASTICS</div>
+      <div class="signature-space"></div>
+      <div class="proprietor">Proprietor</div>
+    </div>
+  </div>
+
+</div><!-- end invoice-wrapper -->
+
+<script>
+const API = 'http://localhost:8000';
+
+// ---------- Init ----------
+window.onload = async () => {
+  // Set today's date
+  document.getElementById('invoiceDate').value = today();
+
+  // Fetch next invoice number
+  try {
+    const res = await fetch(`${API}/api/next-invoice-number`);
+    const data = await res.json();
+    document.getElementById('invoiceNumber').value = data.next_number;
+  } catch (e) {
+    document.getElementById('invoiceNumber').value = '001';
+  }
+
+  // Add first empty row
+  addRow();
+
+  // Auto-uppercase vehicle number
+  document.getElementById('vehicleNumber').addEventListener('input', function() {
+    this.value = this.value.toUpperCase();
+  });
+};
+
+function today() {
+  return new Date().toISOString().split('T')[0];
+}
+
+// ---------- Row Management ----------
+let rowCount = 0;
+
+function addRow() {
+  rowCount++;
+  const tbody = document.getElementById('itemsBody');
+  const tr = document.createElement('tr');
+  tr.id = `row-${rowCount}`;
+  tr.dataset.sno = rowCount;
+  tr.innerHTML = `
+    <td class="center">${rowCount}</td>
+    <td><input type="text" placeholder="Description of goods" oninput="calcRow(this)"></td>
+    <td><input type="text" placeholder="HSN" style="text-align:center"></td>
+    <td><input type="number" placeholder="0" min="0" step="any"
+         style="text-align:right" oninput="calcRow(this)" class="qty-input"></td>
+    <td><input type="number" placeholder="0.00" min="0" step="any"
+         style="text-align:right" oninput="calcRow(this)" class="rate-input"></td>
+    <td class="right amount-display">0.00</td>
+    <td class="no-print" style="border:1px solid #ccc;text-align:center">
+      <button class="remove-row-btn" onclick="removeRow('row-${rowCount}')">&#215;</button>
+    </td>`;
+  tbody.appendChild(tr);
+  recalcTotals();
+}
+
+function removeRow(id) {
+  const row = document.getElementById(id);
+  if (row) row.remove();
+  renumberRows();
+  recalcTotals();
+}
+
+function renumberRows() {
+  const rows = document.querySelectorAll('#itemsBody tr');
+  rows.forEach((r, i) => {
+    r.cells[0].textContent = i + 1;
+    r.dataset.sno = i + 1;
+  });
+}
+
+function calcRow(input) {
+  const row = input.closest('tr');
+  const qty  = parseFloat(row.querySelector('.qty-input')?.value) || 0;
+  const rate = parseFloat(row.querySelector('.rate-input')?.value) || 0;
+  const amt  = qty * rate;
+  row.querySelector('.amount-display').textContent = fmt(amt);
+  recalcTotals();
+}
+
+// ---------- Totals ----------
+function recalcTotals() {
+  let subtotal = 0;
+  document.querySelectorAll('#itemsBody tr').forEach(row => {
+    const qty  = parseFloat(row.querySelector('.qty-input')?.value) || 0;
+    const rate = parseFloat(row.querySelector('.rate-input')?.value) || 0;
+    subtotal += qty * rate;
+  });
+  const sgst  = subtotal * 0.09;
+  const cgst  = subtotal * 0.09;
+  const grand = subtotal + sgst + cgst;
+
+  document.getElementById('subtotalCell').textContent   = fmt(subtotal);
+  document.getElementById('sgstCell').textContent       = fmt(sgst);
+  document.getElementById('cgstCell').textContent       = fmt(cgst);
+  document.getElementById('grandTotalCell').textContent = fmt(grand);
+
+  document.getElementById('amountWords').innerHTML =
+    `<em>Total Amount (INR – In Words):</em> <strong>${numberToWords(Math.round(grand))}</strong>`;
+}
+
+function fmt(n) {
+  return n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// ---------- Save ----------
+async function saveInvoice() {
+  const buyerName = document.getElementById('buyerName').value.trim();
+  if (!buyerName) { alert('Please enter the Buyer Name.'); return; }
+
+  const items = [];
+  let sno = 1;
+  let hasItems = false;
+  document.querySelectorAll('#itemsBody tr').forEach(row => {
+    const desc = row.cells[1].querySelector('input')?.value.trim();
+    const hsn  = row.cells[2].querySelector('input')?.value.trim() || '';
+    const qty  = parseFloat(row.querySelector('.qty-input')?.value) || 0;
+    const rate = parseFloat(row.querySelector('.rate-input')?.value) || 0;
+    if (desc) {
+      hasItems = true;
+      items.push({ s_no: sno++, description: desc, hsn, quantity: qty, rate, amount: qty * rate });
+    }
+  });
+
+  if (!hasItems) { alert('Please add at least one item.'); return; }
+
+  let subtotal = items.reduce((s, i) => s + i.amount, 0);
+  const sgst   = subtotal * 0.09;
+  const cgst   = subtotal * 0.09;
+  const grand  = subtotal + sgst + cgst;
+
+  const payload = {
+    invoice_number: document.getElementById('invoiceNumber').value,
+    invoice_date:   document.getElementById('invoiceDate').value,
+    buyer_name:     buyerName,
+    buyer_address:  document.getElementById('buyerAddress').value.trim(),
+    buyer_gstin:    document.getElementById('buyerGstin').value.trim().toUpperCase(),
+    vehicle_number: document.getElementById('vehicleNumber').value.trim().toUpperCase(),
+    subtotal, sgst, cgst, grand_total: grand,
+    items
+  };
+
+  try {
+    const res = await fetch(`${API}/api/invoices`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      alert('Error: ' + (err.detail || 'Could not save'));
+      return;
+    }
+    const data = await res.json();
+    alert(`Invoice #${data.invoice_number} saved successfully!`);
+    window.location.href = `/invoices`;
+  } catch (e) {
+    alert('Could not connect to server. Is the backend running?');
+  }
+}
+
+// ---------- Reset ----------
+async function resetForm() {
+  if (!confirm('Reset form? All unsaved data will be lost.')) return;
+  document.getElementById('buyerName').value    = '';
+  document.getElementById('buyerAddress').value = '';
+  document.getElementById('buyerGstin').value   = '';
+  document.getElementById('vehicleNumber').value= '';
+  document.getElementById('invoiceDate').value  = today();
+  document.getElementById('itemsBody').innerHTML = '';
+  rowCount = 0;
+  try {
+    const res = await fetch(`${API}/api/next-invoice-number`);
+    const d = await res.json();
+    document.getElementById('invoiceNumber').value = d.next_number;
+  } catch(e) {}
+  addRow();
+}
+
+// ---------- Amount In Words (Indian System) ----------
+function numberToWords(n) {
+  if (n === 0) return 'Zero Only';
+  const ones = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine',
+                 'Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen',
+                 'Seventeen','Eighteen','Nineteen'];
+  const tens = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+
+  function twoDigit(x) {
+    if (x < 20) return ones[x];
+    return tens[Math.floor(x/10)] + (x%10 ? ' '+ones[x%10] : '');
+  }
+  function threeDigit(x) {
+    if (x < 100) return twoDigit(x);
+    return ones[Math.floor(x/100)] + ' Hundred' + (x%100 ? ' '+twoDigit(x%100) : '');
+  }
+
+  let parts = [];
+  const crore   = Math.floor(n / 10000000); n %= 10000000;
+  const lakh    = Math.floor(n / 100000);   n %= 100000;
+  const thousand= Math.floor(n / 1000);     n %= 1000;
+  const rem     = n;
+
+  if (crore)    parts.push(twoDigit(crore)    + ' Crore');
+  if (lakh)     parts.push(twoDigit(lakh)     + ' Lakh');
+  if (thousand) parts.push(twoDigit(thousand) + ' Thousand');
+  if (rem)      parts.push(threeDigit(rem));
+
+  return 'Rupees ' + parts.join(' ') + ' Only';
+}
+</script>
+</body>
+</html>
